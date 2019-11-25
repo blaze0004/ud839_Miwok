@@ -1,32 +1,24 @@
-/*
- * Copyright (C) 2016 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.example.android.miwok;
+
 
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
 import java.util.ArrayList;
 
-public class ColorsActivity extends AppCompatActivity {
+/**
+ * A simple {@link Fragment} subclass.
+ */
+public class ColorsFragment extends Fragment {
+
 
     private MediaPlayer mediaPlayer;
 
@@ -36,13 +28,16 @@ public class ColorsActivity extends AppCompatActivity {
         public void onAudioFocusChange(int focusChange) {
             if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT || focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
                 // PAUSE AUDIO
-                mediaPlayer.pause();
-                mediaPlayer.seekTo(0);
+                if (mediaPlayer != null) {
+                    mediaPlayer.pause();
+                    mediaPlayer.seekTo(0);
+
+                }
 
             } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
                 // RESUME AUDIO
 
-                mediaPlayer.start();
+                if (mediaPlayer != null) mediaPlayer.start();
 
             } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
 
@@ -58,10 +53,16 @@ public class ColorsActivity extends AppCompatActivity {
         }
     };
 
+    public ColorsFragment() {
+        // Required empty public constructor
+    }
+
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.word_list);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.word_list, container, false);
+
 
         final ArrayList<Word> words = new ArrayList<>();
 
@@ -76,8 +77,8 @@ public class ColorsActivity extends AppCompatActivity {
         words.add(new Word("black", "kululli", R.drawable.color_black, R.raw.color_black));
         words.add(new Word("white", "kelelli", R.drawable.color_white, R.raw.color_white));
 
-        WordAdapter adapter = new WordAdapter(this, words, R.color.category_colors);
-        ListView listView = (ListView) findViewById(R.id.list);
+        WordAdapter adapter = new WordAdapter(getActivity(), words, R.color.category_colors);
+        ListView listView = (ListView) rootView.findViewById(R.id.list);
 
         listView.setAdapter(adapter);
 
@@ -86,7 +87,7 @@ public class ColorsActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 releaseMediaPlayer();
                 if (requestAudioFocus()) {
-                    mediaPlayer = MediaPlayer.create(ColorsActivity.this, words.get(i).getmAudioResourceId());
+                    mediaPlayer = MediaPlayer.create(getActivity(), words.get(i).getmAudioResourceId());
                     mediaPlayer.start();
                     mediaPlayer.setOnCompletionListener(onCompletionListener);
                 }
@@ -94,11 +95,14 @@ public class ColorsActivity extends AppCompatActivity {
             }
         });
 
+
+        return rootView;
     }
+
 
     private boolean requestAudioFocus() {
 
-        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        audioManager = (AudioManager) getActivity().getSystemService(Context.AUDIO_SERVICE);
 
         int result = audioManager.requestAudioFocus(onAudioListenerFocus, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
 
@@ -108,7 +112,7 @@ public class ColorsActivity extends AppCompatActivity {
 
 
     @Override
-    protected void onStop() {
+    public void onStop() {
         super.onStop();
 
         releaseMediaPlayer();
